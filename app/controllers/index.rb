@@ -1,18 +1,23 @@
-get '/:user_name' do  
+get '/:user_name' do
   @user = Twitteruser.find_or_create_by_user_name(params[:user_name])
-  @tweets = @user.fetch_tweets.limit(10)
-
-  erb :user
+  if @user.tweets_stale?
+    erb :loading
+  else
+    @tweets = @user.tweets
+    erb :tweets
+  end
 end
 
-
+get '/latest/:user_name' do
+  @user = Twitteruser.find_by_user_name(params[:user_name])
+  @tweets = @user.fetch_tweets.limit(10)
+  erb :tweets
+end
 
 get '/' do
-
-  if params[:user_name].nil?
-    @user = nil
+  if params[:user_name]
+    redirect "/#{params[:user_name]}"
   else
-    redirect to "/#{params[:user_name]}"
+    erb :index
   end
-  erb :index
 end
